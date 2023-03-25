@@ -36,18 +36,18 @@ set /p index=Please enter the image index:
 set "index=%index%"
 echo Mounting Windows image. This may take a while.
 echo.
-md c:\scratchdir
-dism /mount-image /imagefile:c:\w11u\sources\install.wim /index:%index% /mountdir:c:\scratchdir
+md c:\w11u_temp
+dism /mount-image /imagefile:c:\w11u\sources\install.wim /index:%index% /mountdir:c:\w11u_temp
 echo Mounting complete! Performing registry tweaks...
 timeout /t 1 /nobreak > nul
 cls
 
 echo Loading registry...
-reg load HKLM\zCOMPONENTS "c:\scratchdir\Windows\System32\config\COMPONENTS" >nul
-reg load HKLM\zDEFAULT "c:\scratchdir\Windows\System32\config\default" >nul
-reg load HKLM\zNTUSER "c:\scratchdir\Users\Default\ntuser.dat" >nul
-reg load HKLM\zSOFTWARE "c:\scratchdir\Windows\System32\config\SOFTWARE" >nul
-reg load HKLM\zSYSTEM "c:\scratchdir\Windows\System32\config\SYSTEM" >nul
+reg load HKLM\zCOMPONENTS "c:\w11u_temp\Windows\System32\config\COMPONENTS" >nul
+reg load HKLM\zDEFAULT "c:\w11u_temp\Windows\System32\config\default" >nul
+reg load HKLM\zNTUSER "c:\w11u_temp\Users\Default\ntuser.dat" >nul
+reg load HKLM\zSOFTWARE "c:\w11u_temp\Windows\System32\config\SOFTWARE" >nul
+reg load HKLM\zSYSTEM "c:\w11u_temp\Windows\System32\config\SYSTEM" >nul
 echo Bypassing system requirements(on the system image):
 			Reg add "HKLM\zDEFAULT\Control Panel\UnsupportedHardwareNotificationCache" /v "SV1" /t REG_DWORD /d "0" /f >nul 2>&1
 			Reg add "HKLM\zDEFAULT\Control Panel\UnsupportedHardwareNotificationCache" /v "SV2" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -61,7 +61,7 @@ echo Bypassing system requirements(on the system image):
 			Reg add "HKLM\zSYSTEM\Setup\MoSetup" /v "AllowUpgradesWithUnsupportedTPMOrCPU" /t REG_DWORD /d "1" /f >nul 2>&1
 echo Enabling Local Accounts on OOBE:
 Reg add "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\OOBE" /v "BypassNRO" /t REG_DWORD /d "1" /f >nul 2>&1
-copy /y %~dp0autounattend.xml c:\scratchdir\Windows\System32\Sysprep\autounattend.xml
+copy /y %~dp0autounattend.xml c:\w11u_temp\Windows\System32\Sysprep\autounattend.xml
 echo Disabling Reserved Storage:
 Reg add "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager" /v "ShippedWithReserves" /t REG_DWORD /d "0" /f >nul 2>&1
 echo Tweaking complete!
@@ -74,10 +74,10 @@ reg unload HKLM\zSCHEMA >nul 2>&1
 reg unload HKLM\zSOFTWARE >nul 2>&1
 reg unload HKLM\zSYSTEM >nul 2>&1
 echo Cleaning up image...
-dism /image:c:\scratchdir /Cleanup-Image /StartComponentCleanup /ResetBase
+dism /image:c:\w11u_temp /Cleanup-Image /StartComponentCleanup /ResetBase
 echo Cleanup complete.
 echo Unmounting image...
-dism /unmount-image /mountdir:c:\scratchdir /commit
+dism /unmount-image /mountdir:c:\w11u_temp /commit
 echo Exporting image...
 Dism /Export-Image /SourceImageFile:c:\w11u\sources\install.wim /SourceIndex:%index% /DestinationImageFile:c:\w11u\sources\install2.wim /compress:max
 del c:\w11u\sources\install.wim
@@ -86,13 +86,13 @@ echo Windows image completed. Continuing with boot.wim.
 timeout /t 2 /nobreak > nul
 cls
 echo Mounting boot image:
-dism /mount-image /imagefile:c:\w11u\sources\boot.wim /index:2 /mountdir:c:\scratchdir
+dism /mount-image /imagefile:c:\w11u\sources\boot.wim /index:2 /mountdir:c:\w11u_temp
 echo Loading registry...
-reg load HKLM\zCOMPONENTS "c:\scratchdir\Windows\System32\config\COMPONENTS" >nul
-reg load HKLM\zDEFAULT "c:\scratchdir\Windows\System32\config\default" >nul
-reg load HKLM\zNTUSER "c:\scratchdir\Users\Default\ntuser.dat" >nul
-reg load HKLM\zSOFTWARE "c:\scratchdir\Windows\System32\config\SOFTWARE" >nul
-reg load HKLM\zSYSTEM "c:\scratchdir\Windows\System32\config\SYSTEM" >nul
+reg load HKLM\zCOMPONENTS "c:\w11u_temp\Windows\System32\config\COMPONENTS" >nul
+reg load HKLM\zDEFAULT "c:\w11u_temp\Windows\System32\config\default" >nul
+reg load HKLM\zNTUSER "c:\w11u_temp\Users\Default\ntuser.dat" >nul
+reg load HKLM\zSOFTWARE "c:\w11u_temp\Windows\System32\config\SOFTWARE" >nul
+reg load HKLM\zSYSTEM "c:\w11u_temp\Windows\System32\config\SYSTEM" >nul
 echo Bypassing system requirements(on the setup image):
 			Reg add "HKLM\zDEFAULT\Control Panel\UnsupportedHardwareNotificationCache" /v "SV1" /t REG_DWORD /d "0" /f >nul 2>&1
 			Reg add "HKLM\zDEFAULT\Control Panel\UnsupportedHardwareNotificationCache" /v "SV2" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -114,7 +114,7 @@ reg unload HKLM\zSCHEMA >nul 2>&1
 reg unload HKLM\zSOFTWARE >nul 2>&1
 reg unload HKLM\zSYSTEM >nul 2>&1
 echo Unmounting image...
-dism /unmount-image /mountdir:c:\scratchdir /commit 
+dism /unmount-image /mountdir:c:\w11u_temp /commit 
 cls
 echo the w11u image is now completed. Proceeding with the making of the ISO...
 echo Copying unattended file for bypassing MS account on OOBE...
@@ -126,5 +126,5 @@ echo Creation completed! Press any key to exit the script...
 pause 
 echo Performing Cleanup...
 rd c:\w11u /s /q 
-rd c:\scratchdir /s /q 
+rd c:\w11u_temp /s /q 
 exit
